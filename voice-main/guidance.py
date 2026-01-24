@@ -37,9 +37,14 @@ import time
 class BrailleGuidance:
     def __init__(self):
         # 1. Setup the Voice Engine
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', 220)  # Speed: slightly fast is better for navigation
-        self.engine.setProperty('volume', 1.0) # Full volume
+        try:
+            self.engine = pyttsx3.init()
+            self.engine.setProperty('rate', 220)  # Speed: slightly fast is better for navigation
+            self.engine.setProperty('volume', 1.0) # Full volume
+            print("✓ Voice engine initialized successfully")
+        except Exception as e:
+            print(f"⚠ Warning: Voice engine failed to initialize: {e}")
+            self.engine = None
         
         # 2. Timing Variables (Prevents the AI from talking too much)
         self.last_speech_time = 0
@@ -49,10 +54,18 @@ class BrailleGuidance:
         """Checks if enough time has passed, then speaks."""
         current_time = time.time()
         if current_time - self.last_speech_time > self.speech_delay:
-            print(f"Directing: {text}") # Visual feedback for you in VS Code
-            self.engine.say(text)
-            self.engine.runAndWait()
+            print(f"🗣️ Directing: {text}") # Visual feedback for you in VS Code
+            if self.engine:
+                try:
+                    self.engine.say(text)
+                    self.engine.runAndWait()
+                except Exception as e:
+                    print(f"⚠ Speech error: {e}")
+            else:
+                print("⚠ Voice engine not available")
             self.last_speech_time = current_time
+        else:
+            print(f"⏱️ Skipping speech (throttled): {text}")
 
     def start_navigation(self):
         """The main loop that will eventually talk to your partners' code."""
