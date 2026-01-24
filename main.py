@@ -19,6 +19,10 @@ except ImportError as e:
 # 2. Import My Code (Hand Detection)
 from hand_detection import HandNavigator
 
+# 3. Import Voice Guidance
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'voice-main'))
+from guidance import BrailleGuidance
+
 def main():
     print("="*60)
     print("   INTEGRATED BRAILLE NAVIGATION SYSTEM")
@@ -32,15 +36,16 @@ def main():
     print("Initializing Braille Detector...")
     braille_detector = BrailleDetector()
     
+    print("Initializing Voice Guidance...")
+    voice_guide = BrailleGuidance()
+    
     # Open Camera (0 = Laptop, 1 = USB Webcam)
     cap = cv2.VideoCapture(2)
     # FORCE LOW RESOLUTION (Simple optimization only)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     
-    # Audio throttle
-    last_speech_time = 0
-    SPEECH_INTERVAL = 3.0
+    # Note: Audio throttling is now handled by BrailleGuidance class
     
     while True:
         ret, frame = cap.read()
@@ -95,11 +100,8 @@ def main():
             cv2.putText(frame, f"GUIDANCE: {voice_text}", (10, h - 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
             
-            # Print to console (Simulator for Text-to-Speech)
-            current_time = time.time()
-            if current_time - last_speech_time > SPEECH_INTERVAL:
-                print(f"🗣️  SAY: {voice_text}")
-                last_speech_time = current_time
+            # Use actual text-to-speech
+            voice_guide.speak(voice_text)
         
         elif not hand_info and braille_data:
              cv2.putText(frame, "Show Hand", (10, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
