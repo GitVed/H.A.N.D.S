@@ -36,36 +36,36 @@ import time
 
 class BrailleGuidance:
     def __init__(self):
-        # 1. Setup the Voice Engine
+        # Setup the Voice Engine with Windows-compatible settings
         try:
-            self.engine = pyttsx3.init()
-            self.engine.setProperty('rate', 220)  # Speed: slightly fast is better for navigation
-            self.engine.setProperty('volume', 1.0) # Full volume
-            print("✓ Voice engine initialized successfully")
+            self.engine = pyttsx3.init('sapi5')  # Explicitly use Windows SAPI5
+            self.engine.setProperty('rate', 180)  # Slower for clarity
+            self.engine.setProperty('volume', 1.0)  # Full volume
+            
+            # Get available voices and set to default
+            voices = self.engine.getProperty('voices')
+            if voices:
+                self.engine.setProperty('voice', voices[0].id)
+            
+            print("✓ Voice engine initialized")
         except Exception as e:
-            print(f"⚠ Warning: Voice engine failed to initialize: {e}")
+            print(f"⚠ Voice engine failed: {e}")
             self.engine = None
-        
-        # 2. Timing Variables (Prevents the AI from talking too much)
-        self.last_speech_time = 0
-        self.speech_delay = 0.8 # Seconds to wait between commands
 
     def speak(self, text):
-        """Checks if enough time has passed, then speaks."""
-        current_time = time.time()
-        if current_time - self.last_speech_time > self.speech_delay:
-            print(f"🗣️ Directing: {text}") # Visual feedback for you in VS Code
-            if self.engine:
+        """Speaks the given text immediately without throttling."""
+        if self.engine:
+            try:
+                self.engine.say(text)
+                self.engine.runAndWait()
+            except Exception as e:
+                # If there's an error, try to reinitialize
                 try:
+                    self.engine = pyttsx3.init('sapi5')
                     self.engine.say(text)
                     self.engine.runAndWait()
-                except Exception as e:
-                    print(f"⚠ Speech error: {e}")
-            else:
-                print("⚠ Voice engine not available")
-            self.last_speech_time = current_time
-        else:
-            print(f"⏱️ Skipping speech (throttled): {text}")
+                except:
+                    pass  # Silent fail
 
     def start_navigation(self):
         """The main loop that will eventually talk to your partners' code."""
