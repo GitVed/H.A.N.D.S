@@ -33,7 +33,7 @@ def main():
     braille_detector = BrailleDetector()
     
     # Open Camera (0 = Laptop, 1 = USB Webcam)
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(2)
     # FORCE LOW RESOLUTION (Simple optimization only)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
