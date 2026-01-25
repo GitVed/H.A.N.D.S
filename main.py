@@ -40,7 +40,17 @@ def main():
     voice_guide = BrailleGuidance()
     
     # Open Camera (0 = Laptop, 1 = USB Webcam)
-    cap = cv2.VideoCapture(2)
+    # Try index 0 (default) first
+    cap = cv2.VideoCapture(1)
+    
+    if not cap.isOpened():
+        print("ERROR: Could not open camera at index 0.")
+        print("Trying index 1...")
+        cap = cv2.VideoCapture(1)
+        if not cap.isOpened():
+             print("ERROR: Could not open camera at index 1 either.")
+             sys.exit(1)
+
     # FORCE LOW RESOLUTION (Simple optimization only)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -50,6 +60,7 @@ def main():
     while True:
         ret, frame = cap.read()
         if not ret:
+            print("Failed to read frame")
             break
             
         h, w = frame.shape[:2]
@@ -105,9 +116,11 @@ def main():
         
         elif not hand_info and braille_data:
              cv2.putText(frame, "Show Hand", (10, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+             voice_guide.speak("Please show your hand")
         
         elif not braille_data:
              cv2.putText(frame, "Finding Braille...", (10, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+             voice_guide.speak("Scanning for braille")
 
 
         # ---------------------------------------------------------

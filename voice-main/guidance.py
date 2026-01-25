@@ -1,71 +1,55 @@
 import pyttsx3
-
-# 1. Initialize the "Voice"
-engine = pyttsx3.init()
-engine.setProperty('rate', 200) # Speed of speech
-
-def speak(text):
-    """Make the computer speak immediately"""
-    engine.say(text)
-    engine.runAndWait()
-
-def calculate_guidance(hand_x, hand_y, braille_x, braille_y):
-    """The math to decide what to say"""
-    margin = 40  # How close the hand needs to be (in pixels)
-
-    # Horizontal logic
-    if hand_x < braille_x - margin:
-        speak("Right")
-    elif hand_x > braille_x + margin:
-        speak("Left")
-    
-    # Vertical logic
-    elif hand_y < braille_y - margin:
-        speak("Down")
-    elif hand_y > braille_y + margin:
-        speak("Up")
-        
-    else:
-        speak("Found it")
-
-# TEST: Simulate hand at 100 and Braille at 400
-calculate_guidance(100, 200, 400, 200)
-
-import pyttsx3
 import time
+import threading
+import queue
 
 class BrailleGuidance:
     def __init__(self):
-        # Setup the Voice Engine with Windows-compatible settings
-        try:
-            self.engine = pyttsx3.init('sapi5')  # Explicitly use Windows SAPI5
-            self.engine.setProperty('rate', 180)  # Slower for clarity
-            self.engine.setProperty('volume', 1.0)  # Full volume
+        self.speech_queue = queue.Queue()
+        self.last_speech_time = 0
+        self.min_interval = 2.5
+        
+        # Start the worker thread
+        self.worker_thread = threading.Thread(target=self._speech_worker, daemon=True)
+        self.worker_thread.start()
+        print("✓ Voice engine worker started")
+
+    def _speech_worker(self):
+        """Dedicated thread for speaking to avoid blocking main loop"""
+        while True:
+            text = self.speech_queue.get()
+            if text is None: break  # Poison pill
             
-            # Get available voices and set to default
-            voices = self.engine.getProperty('voices')
-            if voices:
-                self.engine.setProperty('voice', voices[0].id)
+            try:
+                # NUCLEAR OPTION: Re-init engine for EVERY phrase
+                # This is the only way to guarantee it doesn't get "stuck"
+                engine = pyttsx3.init('sapi5')
+                engine.setProperty('rate', 150)
+                engine.setProperty('volume', 1.0)
+                engine.say(text)
+                engine.runAndWait()
+                # Explicitly delete to force cleanup
+                del engine
+            except Exception as e:
+                print(f"[ERROR] Speech error: {e}")
             
-            print("✓ Voice engine initialized")
-        except Exception as e:
-            print(f"⚠ Voice engine failed: {e}")
-            self.engine = None
+            self.speech_queue.task_done()
 
     def speak(self, text):
-        """Speaks the given text immediately without throttling."""
-        if self.engine:
-            try:
-                self.engine.say(text)
-                self.engine.runAndWait()
-            except Exception as e:
-                # If there's an error, try to reinitialize
-                try:
-                    self.engine = pyttsx3.init('sapi5')
-                    self.engine.say(text)
-                    self.engine.runAndWait()
-                except:
-                    pass  # Silent fail
+        """Speaks the text if enough time has passed."""
+        current_time = time.time()
+        
+        # Check throttling
+        if current_time - self.last_speech_time > self.min_interval:
+            print(f"[DEBUG] Queuing: {text}")
+            
+            # Clear queue to prioritize newest message? 
+            # Ideally yes, we don't want a backlog of old instructions
+            with self.speech_queue.mutex:
+                self.speech_queue.queue.clear()
+            
+            self.speech_queue.put(text)
+            self.last_speech_time = current_time
 
     def start_navigation(self):
         """The main loop that will eventually talk to your partners' code."""
