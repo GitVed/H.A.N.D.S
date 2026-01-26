@@ -1,4 +1,4 @@
-# H.AN.D.S: A Braille Navigation System
+# H.A.N.D.S: A Braille Navigation System
 
 A computer vision-based assistive tool that helps visually impaired users locate braille signage by providing real-time audio guidance.
 Made during HackHives 36 hour hackathon.
