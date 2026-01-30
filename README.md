@@ -28,9 +28,12 @@ This system acts as a "smart guide" for finding braille signs in public spaces. 
 - **pyttsx3**: Offline text-to-speech
 - **NumPy**: Geometric calculations
 
-## Demo
+## Demo / Devpost
+
+[Devpost](https://devpost.com/software/hapticsight?ref_content=my-projects-tab&ref_feature=my_projects)
 
 [![H.A.N.D.S demo](https://img.youtube.com/vi/AjK3c1EMH4o/0.jpg)](https://www.youtube.com/watch?v=AjK3c1EMH4o)
+
 ## Installation
 
 1. Clone this repository
